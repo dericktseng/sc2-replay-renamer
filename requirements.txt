@@ -1,0 +1,4 @@
+pysimpleguiwx
+wxpython
+pysimplegui
+sc2reader
