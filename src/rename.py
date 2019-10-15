@@ -43,7 +43,10 @@ class rename:
         
         self.set_layout()
     
-    def run(self):      
+
+    def run(self):
+        """runs the GUI"""
+
         self.window = sg.Window('SC2 Replay Renamer', self.layout)
         
         while True:
@@ -173,6 +176,8 @@ class rename:
 
     
     def set_layout(self):
+        """sets the layout of the entire GUI"""
+        
         first_column_width = 30
         third_column_width = 50
         button_width = 9
