@@ -27,6 +27,7 @@ nonselective_variables = [
     'min',
     'sec',
     'map',
+    'mapLE',
     'gametype',
     'expansion',
     'uniqueID'

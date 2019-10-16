@@ -1,6 +1,6 @@
 # default settings
 settings = {
-    'template': '$myracesv$oppraces $mapname $mynames($mymmr) v $oppnames($oppmmr) - $durationminsmins [$month-$day-$year $hour-$min-$sec]',
+    'template': '$myracesv$oppraces $map $mynames($mymmr) v $oppnames($oppmmr) - $durationminsmins [$month-$day-$year $hour-$min-$sec]',
     'source_dir': '',
     'target_dir': '',
     'player_id': '',
