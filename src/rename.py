@@ -105,7 +105,7 @@ class rename:
         # runs only a single instance of the tray application
         if not self.has_tray_running:
             self.has_tray_running = True
-            self.tray.show_message('SC2 Replay Renamer', 'SC2 Replay Renamer Tool is running in the tray', messageicon=sg.SYSTEM_TRAY_MESSAGE_ICON_INFORMATION)
+            self.tray.show_message('SC2 Replay Renamer', 'SC2 Replay Renamer Tool is now running', messageicon=sg.SYSTEM_TRAY_MESSAGE_ICON_INFORMATION)
 
             while True:
                 menu_item = self.tray.read()
@@ -187,6 +187,7 @@ class rename:
     
     def save_settings(self):
         """saves the settings to file"""
+        print('save_settings', self.values)
         self.settings = {
             self._template: self.values[self._template],
             self._source_dir: self.values[self._source_dir],
