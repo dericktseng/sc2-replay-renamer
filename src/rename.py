@@ -1,83 +1,130 @@
 import PySimpleGUIWx as sg
 from sc2reader.factories import SC2Factory
 import json
+import sys
 import os, os.path
-import defaults
+import src.defaults as defaults
+import src.stringmatch as stringmatch
 
 class rename:
 
-    template_name = 'template'
-    source_dir_name = 'source_dir'
-    target_dir_name = 'target_dir'
-    player_id_name = 'player_id'
-    operation_name = 'operation'
-    copy_name = 'copy'
-    move_name = 'move'
-    excludes_name = 'excludes'
-    ai_name = 'AI'
-    custom_name = 'Custom'
-    exclude_matchups_name = 'Exclude_Matchups'
-    exclude_dirs_name = 'Exclude_Dirs'
-    includes_name = 'includes'
-    include_matchups_name = 'Include_Matchups'
-    min_players_name = 'Min_Players'
-    max_players_name = 'Max_Players'
-    expansions_name = 'Expansions'
-    wol_name = 'WoL'
-    hots_name = 'HotS'
-    lotv_name = 'LotV'
-    tray_name = 'tray'
+    template_ = 'template'
+    source_dir_ = 'source_dir'
+    target_dir_ = 'target_dir'
+    player_id_ = 'player_id'
+    operation_ = 'operation'
+    copy_ = 'copy'
+    move_ = 'move'
+    excludes_ = 'excludes'
+    ai_ = 'AI'
+    custom_ = 'Custom'
+    exclude_matchups_ = 'Exclude_Matchups'
+    exclude_dirs_ = 'Exclude_Dirs'
+    includes_ = 'includes'
+    include_matchups_ = 'Include_Matchups'
+    min_players_ = 'Min_Players'
+    max_players_ = 'Max_Players'
+    expansions_ = 'Expansions'
+    wol_ = 'WoL'
+    hots_ = 'HotS'
+    lotv_ = 'LotV'
+    tray_ = 'tray'
     settings_file = 'settings.json'
 
 
     def __init__(self, settings):
         self.settings = settings
-        self.template = settings[rename.template_name]
-        self.source_dir = settings[rename.source_dir_name]
-        self.target_dir = settings[rename.target_dir_name]
-        self.operation = settings[rename.operation_name]
-        self.excludes = settings[rename.excludes_name]
-        self.includes = settings[rename.includes_name]
-        self.player_id = settings[rename.player_id_name]
-        self.tray = settings[rename.tray_name]
-        
         self.set_layout()
+        self.set_tray_menu()
+        
+        self.values = None
+        self.tray = None
+        self.has_tray_running = False
+        self.has_window_running = False
     
 
     def run(self):
-        """runs the GUI"""
+        self.run_window()
 
-        self.window = sg.Window('SC2 Replay Renamer', self.layout)
+
+    def run_window(self):
+        if not self.has_window_running:
+            self.has_window_running = True
+
+            """runs the GUI"""
+            self.window = sg.Window('SC2 Replay Renamer', self.layout)
+            
+            while True:
+                event, values = self.window.read()
+
+                # special case, since values are all set to None here
+                if event is None or event == "Exit":
+                    self.window.close()
+                    break
+                
+                self.values = values
+                print(event, self.values)
+
+                if event == 'Detect':
+                    self.detect_player_id(self.values[rename.source_dir_], excludes=split_string(self.values[rename.exclude_dirs_]))
+                
+                elif event == 'Rename':
+                    if self.values[self.tray_]:
+                        self.window.Hide()
+                        self.run_renamer()
+                        self.run_tray()
+                    else:
+                        self.run_renamer()
+
+                elif event == 'Save':
+                    self.save_settings()
+                    sg.popup_ok('Your settings have been saved!')
+                
+                elif event == 'Default':
+                    self.set_to_default()
+                    sg.popup_ok('Settings reset to default')
+
+                # updates input values in GUI to the most recent by the end of the loop
+                self.window.fill(self.values)
         
-        while True:
-            event, values = self.window.Read()
-            print(event, values)
+        else:
+            print('An Instance of Window is already running!')
+            return None
 
-            if event is None or event == "Exit":
-                break
-            
-            elif event == 'Detect':
-                self.save_settings(values)
-                self.detect_player_id(values[rename.source_dir_name], excludes=split_string(values[rename.exclude_dirs_name]))
-            
-            elif event == 'rename':
-                self.save_settings(values)
-                self.run_renamer()
 
-            elif event == 'Save':
-                self.save_settings(values)
-                sg.popup_ok('Your settings have been saved!')
-            
-            elif event == 'Default':
-                self.set_to_default(values)
-        
-        self.window.Close()
+    def run_tray(self):
+        """Runs the tray application"""
+        self.tray = sg.SystemTray(menu=self.tray_menu)
 
-    
+        # runs only a single instance of the tray application
+        if not self.has_tray_running:
+            self.has_tray_running = True
+            
+            while True:
+                menu_item = self.tray.read()
+                print('TRAY:', menu_item)
+
+                if menu_item == 'Exit':
+                    self.window.close()
+                    self.tray.close()
+                    sys.exit()
+                    break
+                
+                elif menu_item == 'Open' or menu_item == '__ACTIVATED__':
+                    self.has_tray_running = False
+                    self.window.un_hide()
+                    self.tray.close()
+                    break
+
+        else:
+            print('An Instance of Tray is already running!')
+            return None
+
     def detect_player_id(self, source_path, excludes=[]):
         """automagically fills in the player's id after prompting them with popups"""
 
-        if source_path:
+        # if source path is valid, initialize the sc2reader and load replays
+        if source_path and os.path.isdir(source_path):
             sc2 = SC2Factory(directory=source_path, exclude=excludes, depth=1, followlinks=True)
             replays = sc2.load_replays(source_path, load_level=2, load_maps=False, exclude=excludes)
             
@@ -85,39 +132,40 @@ class rename:
             number_of_replay_files = len([name for name in os.listdir(source_path) if '.SC2Replay' in name])            
             number_of_replays_to_test = min(150, number_of_replay_files)
             
+            # populates possible_players with the list of players detected
             for _ in range(number_of_replays_to_test):
                 replay = next(replays)
                 possible_players.extend([(player.name, player.toon_id) for player in replay.players if player.is_human])
 
-            # function to get the next highest player name
-            def get_next_highest():
-                nonlocal possible_players
-                largest = max(possible_players, key=lambda x: possible_players.count(x)) if possible_players else ''
-                possible_players = list(filter(lambda x: x != largest, possible_players)) if largest else []
-                return tuple(largest)
-            # end function
+            # generator to get the next highest player name
+            def get_highest(lst):
+                while lst:
+                    largest = max(lst, key=lambda x: lst.count(x)) if lst else ''
+                    lst = list(filter(lambda x: x != largest, lst)) if largest else []
+                    yield tuple(largest)
 
-            p = get_next_highest()
-            popup = None
+
+            highest = get_highest(possible_players)
+            p = next(highest, None)
             
             # Check if folder is valid and contains replays
             if p:
-                popup = sg.popup_yes_no(f'Are you {p[0]} (id={str(p[1])})?\n\n(Your ID does not change, even after a name change)', font='Arial 12')
+                popup = sg.popup_yes_no(f'Are you {p[0]} (ID: {str(p[1])})?\n\n(Your ID does not change, even after a name change)', font='Arial 12')
                 
                 # checks if there are still names remaining
                 while p and popup == 'No':
-                    p = get_next_highest()
+                    p = next(highest, None)
                     popup = sg.popup_yes_no(f'Are you {p[0]} (id={str(p[1])})?\n\n(Your ID does not change, even after a name change)', font='Arial 12') if p else 'No'
 
+                # updates the values to the latest
                 if popup == 'Yes':
-                    self.window.Element(rename.player_id_name).Update(p[1])
+                    self.values[rename.player_id_] = p[1]
                 else:
                     sg.popup_ok('Your ID has not been changed')
             else:
                 sg.popup_error(f'Cannot detect any SC2Replay files in:\n\n{source_path}')
-        
         else:
-            sg.popup_error('Source Path cannot be empty!')
+            sg.popup_error('Cannot resolve source path (Replay folder)!')
     
 
     def run_renamer(self):
@@ -126,77 +174,76 @@ class rename:
         print('Not Implemented')
 
 
-    def set_to_default(self, values):
+    def set_to_default(self):
         """makes all settings back to default"""
-        
         self.window.fill(defaults.gui_readable_defaults)
-        sg.popup_ok('Settings reset to default')
+        self.values = defaults.gui_readable_defaults
 
     
-    def save_settings(self, values):
+    def save_settings(self):
         """saves the settings to file"""
-
-        self.template = values[rename.template_name]
-        self.source_dir = values[rename.source_dir_name]
-        self.target_dir = values[rename.target_dir_name]
-        self.player_id = values[rename.player_id_name]
-        self.operation = rename.move_name if values[rename.move_name] else rename.copy_name
-
-        self.excludes = dict([
-            get_pair(rename.ai_name, values),
-            get_pair(rename.custom_name, values),
-            get_pair(rename.exclude_matchups_name, values),
-            get_pair(rename.exclude_dirs_name, values)
-        ])
-
-        self.includes = dict([
-            get_pair(rename.include_matchups_name, values),
-            get_pair(rename.min_players_name, values),
-            get_pair(rename.max_players_name, values),
-            get_pair(rename.wol_name, values),
-            get_pair(rename.hots_name, values),
-            get_pair(rename.lotv_name, values)
-        ])
-
-        self.tray = values[rename.tray_name]
-
         self.settings = {
-            rename.template_name: self.template,
-            rename.source_dir_name: self.source_dir,
-            rename.target_dir_name: self.target_dir,
-            rename.player_id_name: self.player_id,
-            rename.operation_name: self.operation,
-            rename.excludes_name: self.excludes,
-            rename.includes_name: self.includes,
-            rename.tray_name: self.tray
+            self.template_: self.values[self.template_],
+            self.source_dir_: self.values[self.source_dir_],
+            self.target_dir_: self.values[self.target_dir_],
+            self.player_id_: self.values[self.player_id_],
+            self.operation_: self.move_ if self.values[self.move_] else self.copy_,
+            self.excludes_: {
+                self.ai_: self.values[self.ai_],
+                self.custom_: self.values[self.custom_],
+                self.exclude_matchups_: self.values[self.exclude_matchups_],
+                self.exclude_dirs_: self.values[self.exclude_dirs_]
+            },
+            self.includes_: {
+                self.include_matchups_: self.values[self.include_matchups_],
+                self.min_players_: self.values[self.min_players_],
+                self.max_players_: self.values[self.max_players_],
+                self.wol_: self.values[self.wol_],
+                self.hots_: self.values[self.hots_],
+                self.lotv_: self.values[self.lotv_]
+            },
+            self.tray_: self.values[self.tray_]
         }
 
         with open(rename.settings_file, 'w') as file:
             json.dump(self.settings, file, indent=4)
 
-    
+
+    def set_tray_menu(self):
+        """ sets the layout of the tray application """
+        self.tray_menu = ['BLANK', ['&Open', '---', '&Exit']]
+
+
     def set_layout(self):
         """sets the layout of the entire GUI"""
+        template = self.settings[rename.template_]
+        source_dir = self.settings[rename.source_dir_]
+        target_dir = self.settings[rename.target_dir_]
+        operation = self.settings[rename.operation_]
+        excludes = self.settings[rename.excludes_]
+        includes = self.settings[rename.includes_]
+        player_id = self.settings[rename.player_id_]
+        tray = self.settings[rename.tray_]
         
         first_column_width = 30
         third_column_width = 50
         button_width = 9
         inner_space = 0.6
 
-        radio_copy = sg.Radio('Copy', 'operation_group', key=rename.copy_name)
-        radio_move = sg.Radio('Move', 'operation_group', key=rename.move_name)
+        radio_copy = sg.Radio('Copy', 'operation_group', key=rename.copy_)
+        radio_move = sg.Radio('Move', 'operation_group', key=rename.move_)
 
-        if self.operation == rename.move_name:
-            radio_move = sg.Radio('Move', 'operation_group', key=rename.move_name, default=True)
+        if operation == rename.move_:
+            radio_move = sg.Radio('Move', 'operation_group', key=rename.move_, default=True)
 
         self.layout = [
 
             # Rename Operations
             [sg.Text('Rename Operations', font='Arial 12 bold')],
-            [sg.Text('Rename Template', size=(first_column_width, 3)), sg.Multiline(default_text=self.template, size=(third_column_width, 3), do_not_clear=True, key=rename.template_name)],
-            [sg.Text('Replay Folder', size=(first_column_width, 1)), sg.InputText(default_text=self.source_dir, key=rename.source_dir_name, do_not_clear=True, size=(third_column_width - button_width - inner_space, 1), change_submits=True), sg.FolderBrowse("Browse", size=(button_width, 1), initial_folder=self.source_dir, target=rename.source_dir_name, auto_size_button=False)],
-            [sg.Text('Target Folder', size=(first_column_width, 1)), sg.InputText(default_text=self.target_dir, key=rename.target_dir_name, do_not_clear=True, size=(third_column_width - button_width - inner_space, 1), change_submits=True), sg.FolderBrowse("Browse", size=(button_width, 1), initial_folder=self.target_dir, target=rename.target_dir_name, auto_size_button=False)],
-            [sg.Text('Player ID', size=(first_column_width, 1)), sg.InputText(default_text=self.player_id, key=rename.player_id_name, size=(third_column_width - button_width - inner_space, 1)), sg.Button('Detect', target=rename.player_id_name, size=(button_width, 1), key='Detect', auto_size_button=False)],
+            [sg.Text('Rename Template', size=(first_column_width, 3)), sg.Multiline(default_text=template, size=(third_column_width, 3), do_not_clear=True, key=rename.template_)],
+            [sg.Text('Replay Folder', size=(first_column_width, 1)), sg.InputText(default_text=source_dir, key=rename.source_dir_, do_not_clear=True, size=(third_column_width - button_width - inner_space, 1), change_submits=True), sg.FolderBrowse("Browse", size=(button_width, 1), initial_folder=source_dir, target=rename.source_dir_, auto_size_button=False)],
+            [sg.Text('Target Folder', size=(first_column_width, 1)), sg.InputText(default_text=target_dir, key=rename.target_dir_, do_not_clear=True, size=(third_column_width - button_width - inner_space, 1), change_submits=True), sg.FolderBrowse("Browse", size=(button_width, 1), initial_folder=target_dir, target=rename.target_dir_, auto_size_button=False)],
+            [sg.Text('Player ID', size=(first_column_width, 1)), sg.InputText(default_text=player_id, key=rename.player_id_, size=(third_column_width - button_width - inner_space, 1)), sg.Button('Detect', target=rename.player_id_, size=(button_width, 1), key='Detect', auto_size_button=False)],
             
             
             # File Operation
@@ -207,48 +254,41 @@ class rename:
 
             # Exclusions
             [sg.Text('Exclusions', font='Arial 14 bold')],
-            [sg.Checkbox('Exclude Games with AI', default=self.excludes[rename.ai_name], key=rename.ai_name)],
-            [sg.Checkbox('Exclude Custom Games', default=self.excludes[rename.custom_name], key=rename.custom_name)],
-            [sg.Text('Exclude directories (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=self.excludes[rename.exclude_dirs_name], size=(third_column_width, 1), key=rename.exclude_dirs_name)],
+            [sg.Checkbox('Exclude Games with AI', default=excludes[rename.ai_], key=rename.ai_)],
+            [sg.Checkbox('Exclude Custom Games', default=excludes[rename.custom_], key=rename.custom_)],
+            [sg.Text('Exclude directories (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=excludes[rename.exclude_dirs_], size=(third_column_width, 1), key=rename.exclude_dirs_)],
 
             # divider
             [sg.Text(' ')],
 
             # Inclusions
             [sg.Text('Inclusions', font='Arial 14 bold')],
-            [sg.Text('Minimum Number of Players', size=(first_column_width, 1)), sg.InputText(default_text=self.includes[rename.min_players_name], key=rename.min_players_name, size=(third_column_width, 1))],
-            [sg.Text('Maximum Number of Players', size=(first_column_width, 1)), sg.InputText(default_text=self.includes[rename.max_players_name], key=rename.max_players_name, size=(third_column_width, 1))],
-            [sg.Checkbox('WoL Replays', key=rename.wol_name, default=self.includes[rename.wol_name])],
-            [sg.Checkbox('HotS Replays', key=rename.hots_name, default=self.includes[rename.hots_name])],
-            [sg.Checkbox('LotV Replays', key=rename.lotv_name, default=self.includes[rename.lotv_name])],
+            [sg.Text('Minimum Number of Players', size=(first_column_width, 1)), sg.InputText(default_text=includes[rename.min_players_], key=rename.min_players_, size=(third_column_width, 1))],
+            [sg.Text('Maximum Number of Players', size=(first_column_width, 1)), sg.InputText(default_text=includes[rename.max_players_], key=rename.max_players_, size=(third_column_width, 1))],
+            [sg.Checkbox('WoL Replays', key=rename.wol_, default=includes[rename.wol_])],
+            [sg.Checkbox('HotS Replays', key=rename.hots_, default=includes[rename.hots_])],
+            [sg.Checkbox('LotV Replays', key=rename.lotv_, default=includes[rename.lotv_])],
 
             # divider
             [sg.Text(' ')],
 
             # Matchups
             [sg.Text('Matchups', font='Arial 14 bold')],
-            [sg.Text('Exclude Matchups (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=self.excludes[rename.exclude_matchups_name], size=(third_column_width, 1), key=rename.exclude_matchups_name)],
-            [sg.Text('Include Matchups (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=self.includes[rename.include_matchups_name], size=(third_column_width, 1), key=rename.include_matchups_name)],
+            [sg.Text('Exclude Matchups (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=excludes[rename.exclude_matchups_], size=(third_column_width, 1), key=rename.exclude_matchups_)],
+            [sg.Text('Include Matchups (separate by comma)', size=(first_column_width, 1)), sg.InputText(default_text=includes[rename.include_matchups_], size=(third_column_width, 1), key=rename.include_matchups_)],
         
             # divider
             [sg.Text(' ')],
 
             # System Tray
-            [sg.Checkbox('Run in System Tray', key='tray', default=self.tray)],
+            [sg.Checkbox('Run in System Tray', key='tray', default=tray)],
 
             # divider
             [sg.Text(' ')],
 
             # Final Buttons
-            [sg.Button('Rename', key='rename'), sg.Save(), sg.Button('Default', key='Default'), sg.Exit()]
+            [sg.Button('Rename', key='Rename'), sg.Save(), sg.Button('Default', key='Default'), sg.Exit()]
         ]
-
-
-def get_pair(key, dictionary):
-    for k, v in dictionary.items():
-        if k == key:
-            return (k, v)
-    return None
 
 
 def split_string(s):
