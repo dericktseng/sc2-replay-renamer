@@ -28,7 +28,8 @@ nonselective_variables = [
     'sec',
     'map',
     'gametype',
-    'expansion'
+    'expansion',
+    'uniqueID'
 ]
 
 all_variables = selective_variables + nonselective_variables
