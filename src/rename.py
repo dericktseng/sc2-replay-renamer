@@ -79,7 +79,6 @@ class rename:
                     break
                 
                 self.values = values
-                print(event, self.values)
 
                 if event == 'Detect':
                     src = self.values[rename._source_dir]
@@ -125,7 +124,6 @@ class rename:
 
             while True:
                 menu_item = self.tray.read()
-                print('TRAY:', menu_item)
 
                 if menu_item == 'Exit' or menu_item == 'None':
                     sys.exit()
@@ -138,10 +136,16 @@ class rename:
                     break
 
                 elif menu_item == 'Open Replay Folder':
-                    if self._source_dir in self.settings and self.settings[self._source_dir]:
+                    if self._source_dir in self.settings and os.path.isdir(self.settings[self._source_dir]):
                         os.startfile(self.settings[self._source_dir])
                     else:
-                        sg.popup_error('No Replay directory specified')
+                        sg.popup_error('Replay directory is invalid')
+                
+                elif menu_item == 'Open Destination Folder':
+                    if self._target_dir in self.settings and os.path.isdir(self.settings[self._target_dir]):
+                        os.startfile(self.settings[self._target_dir])
+                    else:
+                        sg.popup_error('Destination directory is invalid')
 
         else:
             return None
@@ -385,7 +389,6 @@ class rename:
                 # do the renaming operation
                 orig_location = replay.filename
                 new_location = join(dest, newname)
-                print(orig_location, new_location)
                 op(orig_location, new_location)
             
             end_time = time.time()
@@ -492,7 +495,7 @@ class rename:
 
     def set_tray_menu(self):
         """ sets the layout of the tray application """
-        self.tray_menu = ['BLANK', ['&Open', 'Open Replay Folder', '---', '&Exit']]
+        self.tray_menu = ['BLANK', ['&Open', 'Open Replay Folder', 'Open Destination Folder', '---', '&Exit']]
 
 
     def set_layout(self):
