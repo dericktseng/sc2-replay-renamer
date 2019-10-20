@@ -1,23 +1,26 @@
-selective_variables = [
+id_variables = [
     'myteam',
+    'myteamwithmmr'
+    'oppteams',
     'myraces',
-    'myrace',
-    'mymmr',
-    'oppteam',
     'oppraces',
-    'opprace',
+    'mymmr',
     'oppmmr',
-    'wl',
-    'WL'
+    'oppwithmmr',
 ]
 
-nonselective_variables = [
-    't1',
-    't2',
+non_id_variables = [
+    'team1',
+    'team2',
     't1races',
+    't1withmmr',
     't2races',
+    't2withmmr',
     't1mmr',
     't2mmr',
+    'wl', # special case, since implementation will be different if an ID is supplied
+    'WL', # special case, since implementation will be different if an ID is supplied
+    'durationhours',
     'durationmins',
     'durationsecs',
     'month',
@@ -27,10 +30,10 @@ nonselective_variables = [
     'min',
     'sec',
     'map',
-    'mapLE',
     'gametype',
     'expansion',
+    'currentname',
     'uniqueID'
 ]
 
-all_variables = selective_variables + nonselective_variables
+all_variables = id_variables + non_id_variables

@@ -1,6 +1,6 @@
 # default settings
 settings = {
-    'template': '$myracesv$oppraces $map $mynames($mymmr) v $oppnames($oppmmr) - $durationminsmins [$month-$day-$year $hour-$min-$sec]',
+    'template': '$myracesv$oppraces $WL $map $myteamwithmmr v $oppwithmmr - $durationminsm$durationsecss [$month-$day-$year $hour_$min_$sec]',
     'source_dir': '',
     'target_dir': '',
     'player_id': '',
@@ -12,7 +12,7 @@ settings = {
         'Exclude_Dirs': ''
     },
     'includes': {
-        'Include_Matchups': 'XvX',
+        'Include_Matchups': '',
         'Min_Players': "2",
         'Max_Players': "2",
         'WoL': False,
