@@ -2,7 +2,7 @@ from src.rename import rename
 import json
 import sc2reader
 import os.path
-from src.defaults import settings
+from src.structures.defaults import settings
 
 if __name__ == '__main__':
 

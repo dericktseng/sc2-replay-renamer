@@ -12,9 +12,9 @@ import PySimpleGUIWx as sg
 import sc2reader
 from sc2reader.factories import SC2Factory
 
-import src.auto_renamer_thread as AutoRenamer
-import src.defaults as defaults
-import src.stringmatch as stringmatch
+from src.tray.AutoRenamerThread import AutoRenamerThread as AutoRenamer
+import src.structures.defaults as defaults
+import src.structures.stringmatch as stringmatch
 
 
 class rename:
@@ -65,9 +65,6 @@ class rename:
     def run_window(self):
         if not self.has_window_running:
             self.has_window_running = True
-            self.window = sg.Window('SC2 Replay Renamer', self.layout)
-
-            """runs the GUI"""
             self.window = sg.Window('SC2 Replay Renamer', self.layout)
             
             while True:
@@ -122,14 +119,19 @@ class rename:
             self.has_tray_running = True
             self.tray.show_message('SC2 Replay Renamer', 'SC2 Replay Renamer Tool is now running', messageicon=sg.SYSTEM_TRAY_MESSAGE_ICON_INFORMATION)
 
+            auto_renamer = AutoRenamer(self.settings)
+            auto_renamer.start()
+
             while True:
                 menu_item = self.tray.read()
 
                 if menu_item == 'Exit' or menu_item == 'None':
+                    auto_renamer.stop()
                     sys.exit()
                     break
                 
                 elif menu_item == 'Open' or menu_item == sg.EVENT_SYSTEM_TRAY_ICON_ACTIVATED:
+                    auto_renamer.stop()
                     self.has_tray_running = False
                     self.tray.close()
                     self.run_window()
@@ -239,7 +241,7 @@ class rename:
             check = sg.popup_yes_no('Your template string may cause different replays to contain the same name. This WILL result in some replays being lost. Are you sure you want to proceed?')
             if check == 'No':
                 sg.popup_ok('Your files have not been changed. Please change your template to include the $uniqueID variable')
-                return None            
+                return None
         
         # renames all replays detected
         elif rename_all == 'Yes':
@@ -284,8 +286,9 @@ class rename:
                 exclude_matchups = split_string(self.settings[self._excludes][self._exclude_matchups])
                 include_matchups = split_string(self.settings[self._includes][self._include_matchups])
 
-                should_exclude = self.has_matching(replay, exclude_matchups, has_id=True) if self.template_contains_id_vars(template) else self.has_matching(replay, exclude_matchups, has_id=False)
-                should_include = self.has_matching(replay, include_matchups, has_id=True) if self.template_contains_id_vars(template) else self.has_matching(replay, include_matchups, has_id=False)
+                should_exclude = self.has_matching(replay, exclude_matchups, has_id=self.template_contains_id_vars(template))
+                should_include = self.has_matching(replay, include_matchups, has_id=self.template_contains_id_vars(template))
+                
                 if should_exclude:
                     continue
                 
@@ -295,7 +298,6 @@ class rename:
                 
 
                 # actually doing the renaming, after the filtering
-                renamed_count += 1
                 newname = template
 
                 teams = replay.teams[:]
@@ -390,16 +392,13 @@ class rename:
                 orig_location = replay.filename
                 new_location = join(dest, newname)
                 op(orig_location, new_location)
+                renamed_count += 1
             
             end_time = time.time()
             sg.popup_ok(f'Job Done!\nRenamed {renamed_count} replays in {str(end_time - start_time)[:3]} seconds')
         
-        elif rename_all == 'No' and in_tray:
+        if in_tray:
             print('going to implement')
-        
-        else:
-            print('Something went wrong...')
-            sys.exit(1)
 
 
     def has_matching(self, replay, lst, has_id=False):
