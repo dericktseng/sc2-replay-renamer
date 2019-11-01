@@ -1,4 +1,4 @@
-from src.rename import rename
+from src.ReplayRenamer import ReplayRenamer
 import json
 import sc2reader
 import os.path
@@ -17,5 +17,5 @@ if __name__ == '__main__':
             json.dump(settings, file, indent=4)
 
     # initializing and running the GUI
-    gui = rename(settings)
+    gui = ReplayRenamer(settings)
     gui.run()

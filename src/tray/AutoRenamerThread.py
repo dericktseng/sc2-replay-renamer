@@ -1,6 +1,7 @@
 import time
 from watchdog.observers import Observer
 from src.tray.ReplayCreatedHandler import ReplayCreatedHandler
+from src.structures import defaults
 
 class AutoRenamerThread:
     
@@ -11,9 +12,9 @@ class AutoRenamerThread:
         self.continue_running = False
         AutoRenamerThread.name += 1
 
-        self.event_handler = ReplayCreatedHandler()
+        self.event_handler = ReplayCreatedHandler(settings)
         self.observer = Observer()
-        self.observer.schedule(self.event_handler, path=settings['source_dir'], recursive=False)
+        self.observer.schedule(self.event_handler, path=settings[defaults._source_dir], recursive=False)
         
         self.name = AutoRenamerThread.name
 

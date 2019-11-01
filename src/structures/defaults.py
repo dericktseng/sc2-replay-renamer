@@ -1,43 +1,67 @@
+# Constants
+_template = 'template'
+_source_dir = 'source_dir'
+_target_dir = 'target_dir'
+_player_id = 'player_id'
+_operation = 'operation'
+_copy = 'copy'
+_move = 'move'
+_excludes = 'excludes'
+_ai = 'AI'
+_custom = 'Custom'
+_exclude_matchups = 'Exclude_Matchups'
+_exclude_dirs = 'Exclude_Dirs'
+_includes = 'includes'
+_include_matchups = 'Include_Matchups'
+_min_players = 'Min_Players'
+_max_players = 'Max_Players'
+_wol = 'WoL'
+_hots = 'HotS'
+_lotv = 'LotV'
+_tray = 'tray'
+settings_file = 'settings.json'
+
+
 # default settings
 settings = {
-    'template': '$myracesv$oppraces $WL $map $myteamwithmmr v $oppwithmmr - $durationminsm$durationsecss [$month-$day-$year $hour_$min_$sec]',
-    'source_dir': '',
-    'target_dir': '',
-    'player_id': '',
-    'operation': 'copy',
-    'excludes': {
-        'AI': True,
-        'Custom': False,
-        'Exclude_Matchups': '',
-        'Exclude_Dirs': ''
+    _template: '$myracesv$oppraces $WL $map $myteamwithmmr v $oppwithmmr - $durationminsm$durationsecss [$month-$day-$year $hour_$min_$sec]',
+    _source_dir: '',
+    _target_dir: '',
+    _player_id: '',
+    _operation: _copy,
+    _excludes: {
+        _ai: True,
+        _custom: False,
+        _exclude_matchups: '',
+        _exclude_dirs: ''
     },
-    'includes': {
-        'Include_Matchups': '',
-        'Min_Players': "2",
-        'Max_Players': "2",
-        'WoL': False,
-        'HotS': False,
-        'LotV': True
+    _includes: {
+        _include_matchups: '',
+        _min_players: "2",
+        _max_players: "2",
+        _wol: False,
+        _hots: False,
+        _lotv: True
     },
-    'tray': False
+    _tray: False
 }
 
 gui_readable_defaults = {
-    'template': settings['template'],
-    'source_dir': settings['source_dir'],
-    'target_dir': settings['target_dir'],
-    'player_id': settings['player_id'],
-    'copy': True if settings['operation'] == 'copy' else False,
-    'move': True if settings['operation'] == 'move' else False,
-    'AI': settings['excludes']['AI'],
-    'Custom': settings['excludes']['Custom'],
-    'Exclude_Matchups': settings['excludes']['Exclude_Matchups'],
-    'Exclude_Dirs': settings['excludes']['Exclude_Dirs'],
-    'Include_Matchups': settings['includes']['Include_Matchups'],
-    'Min_Players': settings['includes']['Min_Players'],
-    'Max_Players': settings['includes']['Max_Players'],
-    'WoL': settings['includes']['WoL'],
-    'HotS': settings['includes']['HotS'],
-    'LotV': settings['includes']['LotV'],
-    'tray': settings['tray']
+    _template: settings[_template],
+    _source_dir: settings[_source_dir],
+    _target_dir: settings[_target_dir],
+    _player_id: settings[_player_id],
+    _copy: True if settings[_operation] == _copy else False,
+    _move: True if settings[_operation] == _move else False,
+    _ai: settings[_excludes][_ai],
+    _custom: settings[_excludes][_custom],
+    _exclude_matchups: settings[_excludes][_exclude_matchups],
+    _exclude_dirs: settings[_excludes][_exclude_dirs],
+    _include_matchups: settings[_includes][_include_matchups],
+    _min_players: settings[_includes][_min_players],
+    _max_players: settings[_includes][_max_players],
+    _wol: settings[_includes][_wol],
+    _hots: settings[_includes][_hots],
+    _lotv: settings[_includes][_lotv],
+    _tray: settings[_tray]
 }
