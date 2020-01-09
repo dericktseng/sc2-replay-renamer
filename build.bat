@@ -1,5 +1,6 @@
 @echo off
 pip install -r requirements.txt
+pip install --user --force-reinstall git+https://github.com/ggtracker/sc2reader.git
 pip install pyinstaller
 
 python "build_utils/get_sc2reader_path.py" > sc2reader
