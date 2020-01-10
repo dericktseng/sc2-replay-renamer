@@ -1,3 +1,7 @@
 *.json
 __pycache__
 .vscode
+output
+dist
+build
+*.spec
